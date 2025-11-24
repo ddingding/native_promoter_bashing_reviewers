@@ -83,16 +83,11 @@ The analysis identifies:
 
 Raw sequencing data and processed results are stored in the `data/` directory, organized by:
 - `library_order/`: Synthesized library sequences
-- `library_results/`: Processed effect measurements
+- `library_results/`: Processed effect measurements. Note: these processed results are currently empty due to legal restrictions. The raw data can still be found in the documented SRA archive in the manuscript.
    - the mut column refers to the mutation relative to the transcriptional start site, and the relevant column for the inferred effects is beta (in log2 values).
 - `ref/`: Reference sequences for the various wild-type plasmids
-- `nanoluc/`: nanoluciferase measurements in rice and sorghum for specific mutations.
+- `nanoluc/`: nanoluciferase measurements in rice and sorghum for specific mutations. Note: these processed results are currently empty due to legal restrictions.
 - and other various datasets used in the paper
-
-
-## Citation
-
-If you use this code, please cite our paper.
 
 ## Contact
 
