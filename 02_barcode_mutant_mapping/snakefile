@@ -1,0 +1,77 @@
+# written by Stephen Chen
+
+# Initial files in: all-fastq, {sample}_r84066.fastq
+# After rule sort_reads: {sample}_{pbrunID}.fastq
+# After rule create_ali: ali_{sample}_{run_no}.sam
+# After rule summarize_and_clean_muts: df_{sample}_{run_no}.csv
+# After rule 4: df_{sample}_clean_all.csv
+# Final files out: df_{sample}_clean_all.csv
+
+ALL_SAMPLES = ['2A', '2B', '2C',  '3A', '3B', '3C']
+SAMPLES = ['2A', '2B', '2C', '2D']
+PB_RUN_IDS = ['r84066', 'r84268']
+RUN_NOS = [1, 2]
+
+
+# rule all defines the expected final output of the pipeline
+rule all:
+	input:
+		expand('/data/szchen/dms/snakemake/consensus-calling/dfs/mutsBCDFs/df_{sample}_AC_len.csv', sample=ALL_SAMPLES)
+    
+# map all reads to the reference, enabling extraction of the barcode. This is optional.
+rule create_ali:
+	input:
+		reads='/data/szchen/dms/snakemake/consensus-calling/fqs/{sample}_all.fastq',
+		ref='/data/szchen/dms/snakemake/ref/ref_{sample}.fa'
+	output:
+		'/data/szchen/dms/snakemake/consensus-calling/ali/ali_{sample}_all.sam'
+	shell:
+		'minimap2 -Lax map-hifi --MD --cs -o {output} {input.ref} {input.reads}'
+
+rule extract_bcs:
+	input:
+		'/data/szchen/dms/snakemake/consensus-calling/fqs/{sample}_all.fastq'
+	output:
+		reads_bcs='/data/szchen/dms/snakemake/consensus-calling/dfs/readsBCDFs/{sample}_readsBCDF.csv', # df mapping read to bc
+		unique_bcs='/data/szchen/dms/snakemake/consensus-calling/dfs/uniqueBCDFs/{sample}_uniqueBCDF.csv' # df mapping unique bc to read counts
+	shell:
+		'python extract_bcs.py --input {input} --reads_csv {output.reads_bcs} --unique_bc_csv {output.unique_bcs} --sample {wildcards.sample}'
+
+rule consensus_calling:
+    input:
+        samfile='/data/szchen/dms/snakemake/consensus-calling/ali/ali_{sample}_all.sam',
+        unique_bcs='/data/szchen/dms/snakemake/consensus-calling/dfs/uniqueBCDFs/{sample}_uniqueBCDF.csv'
+    output:
+        '/data/szchen/dms/snakemake/consensus-calling/fastq-consensus/{sample}_consensus.fastq'
+    shell:
+        'python consensus.py --samfile {input.samfile} --unique_bc_csv {input.unique_bcs} --o {output}'
+
+rule align_consensus:
+	input:
+		fastq='/data/szchen/dms/snakemake/consensus-calling/fastq-consensus/{sample}_consensus.fastq',
+		ref='/data/szchen/dms/snakemake/ref/ref_{sample}.fa'
+	output:
+		'/data/szchen/dms/snakemake/consensus-calling/ali-consensus/{sample}_consensus.sam'
+	shell:
+		'minimap2 --MD -Lax map-hifi {input.ref} {input.fastq} > {output}'
+
+
+#summarizing the mutations, and clean mutations (separate BC, clean deletions individual, etc.)
+rule summarize_and_clean_muts:
+# TODO: need slightly modified summarize sam script to handle at barcode rather than read names
+	input:
+		'/data/szchen/dms/snakemake/consensus-calling/ali-consensus/{sample}_consensus.sam'
+	output:
+		path_tsv='/data/szchen/dms/snakemake/consensus-calling/mut_summary/summ_{sample}_all.tsv',
+		path_df='/data/szchen/dms/snakemake/consensus-calling/dfs/mutsBCDFs/df_{sample}_AC.csv'
+	shell:
+		'python summarize_sam.py --samfile {input} --file_out_name {output.path_tsv} --df_out_name {output.path_df} --sample {wildcards.sample}'
+
+rule add_seq_lengths:
+	input:
+		fastq='/data/szchen/dms/snakemake/consensus-calling/fastq-consensus/{sample}_consensus.fastq',
+		path_df='/data/szchen/dms/snakemake/consensus-calling/dfs/mutsBCDFs/df_{sample}_AC.csv'
+	output:
+		'/data/szchen/dms/snakemake/consensus-calling/dfs/mutsBCDFs/df_{sample}_AC_len.csv'
+	shell:
+		'python update_csv_with_len.py {input.fastq} {input.path_df}'

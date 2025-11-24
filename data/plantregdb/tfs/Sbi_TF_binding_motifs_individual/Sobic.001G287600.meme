@@ -1,0 +1,23 @@
+MEME version 4.4
+
+ALPHABET= ACGT
+
+strands: + -
+
+Background letter frequencies (from file `../../promoter_background/Sbi.bg'):
+A 0.27030 C 0.22970 G 0.22970 T 0.27030 
+
+MOTIF Sobic.001G287600 MP00084
+
+letter-probability matrix: alength= 4 w= 8 nsites= 100 E= 0
+  0.250000	  0.100000	  0.600000	  0.050000	
+  0.090000	  0.910000	  0.000000	  0.000000	
+  0.970000	  0.000000	  0.020000	  0.010000	
+  0.000000	  0.850000	  0.000000	  0.150000	
+  0.150000	  0.000000	  0.850000	  0.000000	
+  0.010000	  0.020000	  0.000000	  0.970000	
+  0.000000	  0.000000	  0.910000	  0.090000	
+  0.050000	  0.600000	  0.100000	  0.250000	
+
+URL http://planttfdb.cbi.pku.edu.cn/tf.php?sp=Sbi&did=Sobic.001G287600.1.p#bind_motif
+
